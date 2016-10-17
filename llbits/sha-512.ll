@@ -644,14 +644,27 @@ define void @sha512_finalize(%struct.context_t* %context, i8* %digest) #0 {
   %81 = load i8*, i8** %2, align 8
   call void @copyU64ToByteArrays(i64* %80, i8* %81, i64 8)
   %82 = getelementptr inbounds [128 x i8], [128 x i8]* %lastBlock, i32 0, i32 0
-  %83 = call i32 @memset_s(i8* %82, i64 128, i32 0, i64 128)
+  call void @static_force_memset(i8* %82, i64 128)
   ret void
 }
 
 ; Function Attrs: argmemonly nounwind
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) #4
 
-declare i32 @memset_s(i8*, i64, i32, i64) #1
+; Function Attrs: nounwind ssp uwtable
+define internal void @static_force_memset(i8* %ptr, i64 %len) #0 {
+  %1 = alloca i8*, align 8
+  %2 = alloca i64, align 8
+  store i8* %ptr, i8** %1, align 8
+  store i64 %len, i64* %2, align 8
+  %3 = load i8*, i8** %1, align 8
+  %4 = load i64, i64* %2, align 8
+  %5 = load i8*, i8** %1, align 8
+  %6 = call i64 @llvm.objectsize.i64.p0i8(i8* %5, i1 false)
+  %7 = call i8* @__memset_chk(i8* %3, i32 0, i64 %4, i64 %6) #5
+  call void asm sideeffect "", "imr,~{memory},~{dirflag},~{fpsr},~{flags}"(i8** %1) #5, !srcloc !2
+  ret void
+}
 
 ; Function Attrs: nounwind ssp uwtable
 define void @sha512_init_context(%struct.context_t* %ctx) #0 {
@@ -670,7 +683,7 @@ define void @sha512_init_context(%struct.context_t* %ctx) #0 {
   %9 = load %struct.context_t*, %struct.context_t** %1, align 8
   %10 = getelementptr inbounds %struct.context_t, %struct.context_t* %9, i32 0, i32 2
   %11 = getelementptr inbounds [128 x i8], [128 x i8]* %10, i32 0, i32 0
-  %12 = call i32 @memset_s(i8* %11, i64 128, i32 0, i64 128)
+  call void @static_force_memset(i8* %11, i64 128)
   ret void
 }
 
@@ -704,6 +717,9 @@ define internal zeroext i1 @isLittleEndian() #0 {
   ret i1 %3
 }
 
+; Function Attrs: nounwind
+declare i8* @__memset_chk(i8*, i32, i64, i64) #2
+
 attributes #0 = { nounwind ssp uwtable "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="core2" "target-features"="+cx16,+fxsr,+mmx,+sse,+sse2,+sse3,+ssse3" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="core2" "target-features"="+cx16,+fxsr,+mmx,+sse,+sse2,+sse3,+ssse3" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #2 = { nounwind "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="core2" "target-features"="+cx16,+fxsr,+mmx,+sse,+sse2,+sse3,+ssse3" "unsafe-fp-math"="false" "use-soft-float"="false" }
@@ -716,3 +732,4 @@ attributes #5 = { nounwind }
 
 !0 = !{i32 1, !"PIC Level", i32 2}
 !1 = !{!"clang version 3.8.1 (tags/RELEASE_381/final)"}
+!2 = !{i32 360}
