@@ -19,7 +19,7 @@ library
   exposed-modules:     VCrypt.SHA512
   -- other-modules:       
   other-extensions:    ScopedTypeVariables
-  build-depends:       base >=4.8 && <4.9, bytestring >=0.10 && <0.11
+  build-depends:       base >=4.8 && <4.10, bytestring >=0.10 && <0.11
   hs-source-dirs:      src
   build-tools:         c2hs
   include-dirs:        cbits
