@@ -10,16 +10,22 @@ license-file:        LICENSE
 author:              Thomas M. DuBuisson
 maintainer:          tommd@galois.com
 copyright:           Galois 2016
--- category:            
+category:            Cryptography
 build-type:          Simple
 extra-source-files:  ChangeLog.md, ./llbits/*.ll, cbits/sha-512.h
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     VCrypt.SHA512, VCrypt.SHA512
+  exposed-modules:     VCrypt.SHA512
   -- other-modules:       
   other-extensions:    ScopedTypeVariables
   build-depends:       base >=4.8 && <4.9, bytestring >=0.10 && <0.11
   hs-source-dirs:      src
-  build-tools:         chs
+  build-tools:         c2hs
+  include-dirs:        cbits
+  c-sources:           llbits/sha-512.ll
+                       llbits/sha512_H0.ll
+                       llbits/sha512_H0.ll
+                       llbits/sha512_Hblock.ll
+                       llbits/sha512_Hblock_clean.ll
   default-language:    Haskell2010
