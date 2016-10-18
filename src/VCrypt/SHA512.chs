@@ -108,7 +108,7 @@ contextToBytes (Context ctx) = unsafePerformIO $
     BS.pack <$> peekNr contextSize (castPtr p)
 
 bytesToContext :: ByteString -> Maybe Context
-bytesToContext bs | BS.length bs /= digestSize = Nothing
+bytesToContext bs | BS.length bs /= contextSize = Nothing
                   | otherwise =
  unsafePerformIO $ BS.useAsCString bs $ \p ->
   do fptr <- mallocForeignPtrBytes digestSize
