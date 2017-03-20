@@ -29,3 +29,11 @@ library
                        llbits/sha512_Hblock.ll
                        llbits/sha512_Hblock_clean.ll
   default-language:    Haskell2010
+
+test-suite simple-property-tests
+    default-language:  Haskell2010
+    type:              exitcode-stdio-1.0
+    main-is:           test.hs
+    hs-source-dirs:    test
+    build-depends:     base, cryptol-gen-sha512, tasty, tasty-quickcheck,
+                       bytestring

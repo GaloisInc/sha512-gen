@@ -359,10 +359,11 @@ define void @sha512_update(i8* %msg, i64 %msgLenByte, %struct.context_t* %contex
   %3 = alloca %struct.context_t*, align 8
   %blockSizeBits = alloca i16, align 2
   %blockSizeInByte = alloca i8, align 1
-  %nrBlocks = alloca i128, align 16
+  %nrBlocks = alloca i64, align 8
   %j = alloca i64, align 8
   %i = alloca i64, align 8
   %nrNeeded = alloca i64, align 8
+  %spareBytePtr = alloca i8*, align 8
   store i8* %msg, i8** %1, align 8
   store i64 %msgLenByte, i64* %2, align 8
   store %struct.context_t* %context, %struct.context_t** %3, align 8
@@ -370,9 +371,9 @@ define void @sha512_update(i8* %msg, i64 %msgLenByte, %struct.context_t* %contex
   store i8 -128, i8* %blockSizeInByte, align 1
   %4 = load i64, i64* %2, align 8
   %5 = udiv i64 %4, 128
-  %6 = zext i64 %5 to i128
-  store i128 %6, i128* %nrBlocks, align 16
-  %7 = load i128, i128* %nrBlocks, align 16
+  store i64 %5, i64* %nrBlocks, align 8
+  %6 = load i64, i64* %nrBlocks, align 8
+  %7 = zext i64 %6 to i128
   %8 = mul i128 %7, 1024
   %9 = load %struct.context_t*, %struct.context_t** %3, align 8
   %10 = getelementptr inbounds %struct.context_t, %struct.context_t* %9, i32 0, i32 1
@@ -384,125 +385,146 @@ define void @sha512_update(i8* %msg, i64 %msgLenByte, %struct.context_t* %contex
   %15 = load i16, i16* %14, align 16
   %16 = zext i16 %15 to i32
   %17 = icmp eq i32 0, %16
-  br i1 %17, label %18, label %65
+  br i1 %17, label %18, label %64
 
 ; <label>:18                                      ; preds = %0
   store i64 0, i64* %j, align 8
   store i64 0, i64* %i, align 8
   br label %19
 
-; <label>:19                                      ; preds = %34, %18
+; <label>:19                                      ; preds = %33, %18
   %20 = load i64, i64* %i, align 8
-  %21 = zext i64 %20 to i128
-  %22 = load i128, i128* %nrBlocks, align 16
-  %23 = icmp ult i128 %21, %22
-  br i1 %23, label %24, label %39
+  %21 = load i64, i64* %nrBlocks, align 8
+  %22 = icmp ult i64 %20, %21
+  br i1 %22, label %23, label %38
 
-; <label>:24                                      ; preds = %19
-  %25 = load %struct.context_t*, %struct.context_t** %3, align 8
-  %26 = getelementptr inbounds %struct.context_t, %struct.context_t* %25, i32 0, i32 0
-  %27 = getelementptr inbounds [8 x i64], [8 x i64]* %26, i32 0, i32 0
+; <label>:23                                      ; preds = %19
+  %24 = load %struct.context_t*, %struct.context_t** %3, align 8
+  %25 = getelementptr inbounds %struct.context_t, %struct.context_t* %24, i32 0, i32 0
+  %26 = getelementptr inbounds [8 x i64], [8 x i64]* %25, i32 0, i32 0
+  %27 = load i8*, i8** %1, align 8
   %28 = load i64, i64* %j, align 8
-  %29 = load i8*, i8** %1, align 8
-  %30 = getelementptr inbounds i8, i8* %29, i64 %28
-  %31 = load %struct.context_t*, %struct.context_t** %3, align 8
-  %32 = getelementptr inbounds %struct.context_t, %struct.context_t* %31, i32 0, i32 0
-  %33 = getelementptr inbounds [8 x i64], [8 x i64]* %32, i32 0, i32 0
-  call void @sha512_Hblock(i64* %27, i8* %30, i64* %33)
-  br label %34
+  %29 = getelementptr inbounds i8, i8* %27, i64 %28
+  %30 = load %struct.context_t*, %struct.context_t** %3, align 8
+  %31 = getelementptr inbounds %struct.context_t, %struct.context_t* %30, i32 0, i32 0
+  %32 = getelementptr inbounds [8 x i64], [8 x i64]* %31, i32 0, i32 0
+  call void @sha512_Hblock(i64* %26, i8* %29, i64* %32)
+  br label %33
 
-; <label>:34                                      ; preds = %24
-  %35 = load i64, i64* %i, align 8
-  %36 = add i64 %35, 1
-  store i64 %36, i64* %i, align 8
-  %37 = load i64, i64* %j, align 8
-  %38 = add i64 %37, 128
-  store i64 %38, i64* %j, align 8
+; <label>:33                                      ; preds = %23
+  %34 = load i64, i64* %i, align 8
+  %35 = add i64 %34, 1
+  store i64 %35, i64* %i, align 8
+  %36 = load i64, i64* %j, align 8
+  %37 = add i64 %36, 128
+  store i64 %37, i64* %j, align 8
   br label %19
 
-; <label>:39                                      ; preds = %19
-  %40 = load i64, i64* %j, align 8
-  %41 = load i64, i64* %2, align 8
-  %42 = icmp ne i64 %40, %41
-  br i1 %42, label %43, label %64
+; <label>:38                                      ; preds = %19
+  %39 = load i64, i64* %j, align 8
+  %40 = load i64, i64* %2, align 8
+  %41 = icmp ne i64 %39, %40
+  br i1 %41, label %42, label %63
 
-; <label>:43                                      ; preds = %39
-  %44 = load i64, i64* %2, align 8
-  %45 = load i64, i64* %j, align 8
-  %46 = sub i64 %44, %45
-  %47 = trunc i64 %46 to i16
-  %48 = load %struct.context_t*, %struct.context_t** %3, align 8
-  %49 = getelementptr inbounds %struct.context_t, %struct.context_t* %48, i32 0, i32 3
-  store i16 %47, i16* %49, align 16
-  %50 = load %struct.context_t*, %struct.context_t** %3, align 8
-  %51 = getelementptr inbounds %struct.context_t, %struct.context_t* %50, i32 0, i32 2
-  %52 = getelementptr inbounds [128 x i8], [128 x i8]* %51, i32 0, i32 0
+; <label>:42                                      ; preds = %38
+  %43 = load i64, i64* %2, align 8
+  %44 = load i64, i64* %j, align 8
+  %45 = sub i64 %43, %44
+  %46 = trunc i64 %45 to i16
+  %47 = load %struct.context_t*, %struct.context_t** %3, align 8
+  %48 = getelementptr inbounds %struct.context_t, %struct.context_t* %47, i32 0, i32 3
+  store i16 %46, i16* %48, align 16
+  %49 = load %struct.context_t*, %struct.context_t** %3, align 8
+  %50 = getelementptr inbounds %struct.context_t, %struct.context_t* %49, i32 0, i32 2
+  %51 = getelementptr inbounds [128 x i8], [128 x i8]* %50, i32 0, i32 0
+  %52 = load i8*, i8** %1, align 8
   %53 = load i64, i64* %j, align 8
-  %54 = load i8*, i8** %1, align 8
-  %55 = getelementptr inbounds i8, i8* %54, i64 %53
-  %56 = load i64, i64* %2, align 8
-  %57 = load i64, i64* %j, align 8
-  %58 = sub i64 %56, %57
-  %59 = load %struct.context_t*, %struct.context_t** %3, align 8
-  %60 = getelementptr inbounds %struct.context_t, %struct.context_t* %59, i32 0, i32 2
-  %61 = getelementptr inbounds [128 x i8], [128 x i8]* %60, i32 0, i32 0
-  %62 = call i64 @llvm.objectsize.i64.p0i8(i8* %61, i1 false)
-  %63 = call i8* @__memcpy_chk(i8* %52, i8* %55, i64 %58, i64 %62) #5
-  br label %64
+  %54 = getelementptr inbounds i8, i8* %52, i64 %53
+  %55 = load i64, i64* %2, align 8
+  %56 = load i64, i64* %j, align 8
+  %57 = sub i64 %55, %56
+  %58 = load %struct.context_t*, %struct.context_t** %3, align 8
+  %59 = getelementptr inbounds %struct.context_t, %struct.context_t* %58, i32 0, i32 2
+  %60 = getelementptr inbounds [128 x i8], [128 x i8]* %59, i32 0, i32 0
+  %61 = call i64 @llvm.objectsize.i64.p0i8(i8* %60, i1 false)
+  %62 = call i8* @__memcpy_chk(i8* %51, i8* %54, i64 %57, i64 %61) #5
+  br label %63
 
-; <label>:64                                      ; preds = %43, %39
-  br label %108
+; <label>:63                                      ; preds = %42, %38
+  br label %121
 
-; <label>:65                                      ; preds = %0
-  %66 = load %struct.context_t*, %struct.context_t** %3, align 8
-  %67 = getelementptr inbounds %struct.context_t, %struct.context_t* %66, i32 0, i32 3
-  %68 = load i16, i16* %67, align 16
-  %69 = zext i16 %68 to i32
-  %70 = sub nsw i32 128, %69
-  %71 = sext i32 %70 to i64
-  store i64 %71, i64* %nrNeeded, align 8
-  %72 = load %struct.context_t*, %struct.context_t** %3, align 8
-  %73 = getelementptr inbounds %struct.context_t, %struct.context_t* %72, i32 0, i32 3
-  %74 = load i16, i16* %73, align 16
-  %75 = zext i16 %74 to i64
-  %76 = load %struct.context_t*, %struct.context_t** %3, align 8
-  %77 = getelementptr inbounds %struct.context_t, %struct.context_t* %76, i32 0, i32 2
-  %78 = getelementptr inbounds [128 x i8], [128 x i8]* %77, i64 0, i64 %75
-  %79 = load i8*, i8** %1, align 8
-  %80 = load i64, i64* %nrNeeded, align 8
-  %81 = load %struct.context_t*, %struct.context_t** %3, align 8
-  %82 = getelementptr inbounds %struct.context_t, %struct.context_t* %81, i32 0, i32 3
-  %83 = load i16, i16* %82, align 16
-  %84 = zext i16 %83 to i64
-  %85 = load %struct.context_t*, %struct.context_t** %3, align 8
-  %86 = getelementptr inbounds %struct.context_t, %struct.context_t* %85, i32 0, i32 2
-  %87 = getelementptr inbounds [128 x i8], [128 x i8]* %86, i64 0, i64 %84
-  %88 = call i64 @llvm.objectsize.i64.p0i8(i8* %87, i1 false)
-  %89 = call i8* @__memcpy_chk(i8* %78, i8* %79, i64 %80, i64 %88) #5
-  %90 = load %struct.context_t*, %struct.context_t** %3, align 8
-  %91 = getelementptr inbounds %struct.context_t, %struct.context_t* %90, i32 0, i32 0
-  %92 = getelementptr inbounds [8 x i64], [8 x i64]* %91, i32 0, i32 0
-  %93 = load %struct.context_t*, %struct.context_t** %3, align 8
-  %94 = getelementptr inbounds %struct.context_t, %struct.context_t* %93, i32 0, i32 2
-  %95 = getelementptr inbounds [128 x i8], [128 x i8]* %94, i32 0, i32 0
-  %96 = load %struct.context_t*, %struct.context_t** %3, align 8
-  %97 = getelementptr inbounds %struct.context_t, %struct.context_t* %96, i32 0, i32 0
-  %98 = getelementptr inbounds [8 x i64], [8 x i64]* %97, i32 0, i32 0
-  call void @sha512_Hblock(i64* %92, i8* %95, i64* %98)
-  %99 = load %struct.context_t*, %struct.context_t** %3, align 8
-  %100 = getelementptr inbounds %struct.context_t, %struct.context_t* %99, i32 0, i32 3
-  store i16 0, i16* %100, align 16
-  %101 = load i64, i64* %nrNeeded, align 8
-  %102 = load i8*, i8** %1, align 8
-  %103 = getelementptr inbounds i8, i8* %102, i64 %101
-  %104 = load i64, i64* %2, align 8
-  %105 = load i64, i64* %nrNeeded, align 8
-  %106 = sub i64 %104, %105
-  %107 = load %struct.context_t*, %struct.context_t** %3, align 8
-  call void @sha512_update(i8* %103, i64 %106, %struct.context_t* %107)
-  br label %108
+; <label>:64                                      ; preds = %0
+  %65 = load %struct.context_t*, %struct.context_t** %3, align 8
+  %66 = getelementptr inbounds %struct.context_t, %struct.context_t* %65, i32 0, i32 3
+  %67 = load i16, i16* %66, align 16
+  %68 = zext i16 %67 to i32
+  %69 = sub nsw i32 128, %68
+  %70 = sext i32 %69 to i64
+  store i64 %70, i64* %nrNeeded, align 8
+  %71 = load %struct.context_t*, %struct.context_t** %3, align 8
+  %72 = getelementptr inbounds %struct.context_t, %struct.context_t* %71, i32 0, i32 3
+  %73 = load i16, i16* %72, align 16
+  %74 = zext i16 %73 to i64
+  %75 = load %struct.context_t*, %struct.context_t** %3, align 8
+  %76 = getelementptr inbounds %struct.context_t, %struct.context_t* %75, i32 0, i32 2
+  %77 = getelementptr inbounds [128 x i8], [128 x i8]* %76, i64 0, i64 %74
+  store i8* %77, i8** %spareBytePtr, align 8
+  %78 = load i64, i64* %2, align 8
+  %79 = load i64, i64* %nrNeeded, align 8
+  %80 = icmp uge i64 %78, %79
+  br i1 %80, label %81, label %106
 
-; <label>:108                                     ; preds = %65, %64
+; <label>:81                                      ; preds = %64
+  %82 = load i8*, i8** %spareBytePtr, align 8
+  %83 = load i8*, i8** %1, align 8
+  %84 = load i64, i64* %nrNeeded, align 8
+  %85 = load i8*, i8** %spareBytePtr, align 8
+  %86 = call i64 @llvm.objectsize.i64.p0i8(i8* %85, i1 false)
+  %87 = call i8* @__memcpy_chk(i8* %82, i8* %83, i64 %84, i64 %86) #5
+  %88 = load %struct.context_t*, %struct.context_t** %3, align 8
+  %89 = getelementptr inbounds %struct.context_t, %struct.context_t* %88, i32 0, i32 0
+  %90 = getelementptr inbounds [8 x i64], [8 x i64]* %89, i32 0, i32 0
+  %91 = load %struct.context_t*, %struct.context_t** %3, align 8
+  %92 = getelementptr inbounds %struct.context_t, %struct.context_t* %91, i32 0, i32 2
+  %93 = getelementptr inbounds [128 x i8], [128 x i8]* %92, i32 0, i32 0
+  %94 = load %struct.context_t*, %struct.context_t** %3, align 8
+  %95 = getelementptr inbounds %struct.context_t, %struct.context_t* %94, i32 0, i32 0
+  %96 = getelementptr inbounds [8 x i64], [8 x i64]* %95, i32 0, i32 0
+  call void @sha512_Hblock(i64* %90, i8* %93, i64* %96)
+  %97 = load %struct.context_t*, %struct.context_t** %3, align 8
+  %98 = getelementptr inbounds %struct.context_t, %struct.context_t* %97, i32 0, i32 3
+  store i16 0, i16* %98, align 16
+  %99 = load i8*, i8** %1, align 8
+  %100 = load i64, i64* %nrNeeded, align 8
+  %101 = getelementptr inbounds i8, i8* %99, i64 %100
+  %102 = load i64, i64* %2, align 8
+  %103 = load i64, i64* %nrNeeded, align 8
+  %104 = sub i64 %102, %103
+  %105 = load %struct.context_t*, %struct.context_t** %3, align 8
+  call void @sha512_update(i8* %101, i64 %104, %struct.context_t* %105)
+  br label %120
+
+; <label>:106                                     ; preds = %64
+  %107 = load i8*, i8** %spareBytePtr, align 8
+  %108 = load i8*, i8** %1, align 8
+  %109 = load i64, i64* %2, align 8
+  %110 = load i8*, i8** %spareBytePtr, align 8
+  %111 = call i64 @llvm.objectsize.i64.p0i8(i8* %110, i1 false)
+  %112 = call i8* @__memcpy_chk(i8* %107, i8* %108, i64 %109, i64 %111) #5
+  %113 = load i64, i64* %2, align 8
+  %114 = load %struct.context_t*, %struct.context_t** %3, align 8
+  %115 = getelementptr inbounds %struct.context_t, %struct.context_t* %114, i32 0, i32 3
+  %116 = load i16, i16* %115, align 16
+  %117 = zext i16 %116 to i64
+  %118 = add i64 %117, %113
+  %119 = trunc i64 %118 to i16
+  store i16 %119, i16* %115, align 16
+  br label %120
+
+; <label>:120                                     ; preds = %106, %81
+  br label %121
+
+; <label>:121                                     ; preds = %120, %63
   ret void
 }
 
@@ -732,4 +754,4 @@ attributes #5 = { nounwind }
 
 !0 = !{i32 1, !"PIC Level", i32 2}
 !1 = !{!"clang version 3.8.1 (tags/RELEASE_381/final)"}
-!2 = !{i32 360}
+!2 = !{i32 425}

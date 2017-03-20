@@ -10,8 +10,7 @@ module VCrypt.SHA512
   , contextToBytes
   , bytesToDigest
   , bytesToContext
-  , contextSize
-  , digestSize
+  , contextSize, digestSize
   ) where
 
 import           Data.ByteString (ByteString)
