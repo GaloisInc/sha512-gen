@@ -11,6 +11,7 @@ module VCrypt.SHA512
   , bytesToDigest
   , bytesToContext
   , contextSize
+  , digestSize
   ) where
 
 import           Data.ByteString (ByteString)
@@ -55,11 +56,7 @@ foreign import ccall unsafe "sha512_finalize"
   c_finalize :: Ptr C_Context -> Ptr Word8 -> IO ()
 
 allocateContext :: IO (ForeignPtr C_Context)
-allocateContext =
-  do fp <- mallocForeignPtrBytes contextSize
-     withForeignPtr fp $ \p ->
-      mapM_ (\off -> pokeElemOff (castPtr p :: Ptr Word8) off 0) [0..contextSize-1]
-     return fp
+allocateContext = mallocForeignPtrBytes contextSize
 
 contextCopy :: Context -> (Ptr C_Context -> IO ()) -> IO Context
 contextCopy (Context fptr) io =
@@ -111,6 +108,6 @@ bytesToContext :: ByteString -> Maybe Context
 bytesToContext bs | BS.length bs /= contextSize = Nothing
                   | otherwise =
  unsafePerformIO $ BS.useAsCString bs $ \p ->
-  do fptr <- mallocForeignPtrBytes digestSize
-     withForeignPtr fptr $ \pDst -> copyBytes pDst (castPtr p) digestSize
+  do fptr <- allocateContext
+     withForeignPtr fptr $ \pDst -> copyBytes pDst (castPtr p) contextSize
      return (Just (Context fptr))
